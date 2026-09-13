@@ -1,6 +1,6 @@
 {
   "current_milestone": "M0 \u2014 Canonical data access and provenance",
-  "current_question": "Can source identity and complete decoding be independently verified before publication analysis?",
+  "current_question": "Can the canonical video be accessed and its independently bound digest and full decode verified before M1 stationarity?",
   "base_commit": "07612f9c1071881a4fc7e1b5a20e497cc6640e62",
   "completed_capabilities": [
     "Independent canonical-reference digest and byte-size comparison",
@@ -41,7 +41,8 @@
     "Python source/scripts/tests compilation PASS",
     "26 software unit/integration tests PASS",
     "4 real-video diagnostic regression tests PASS",
-    "Git diff whitespace check PASS"
+    "Git diff whitespace check PASS",
+    "GitHub Actions implementation CI PASS: run 34742080456, job 103683366352; package install, FFmpeg install, compile, software tests, private-input skip checks"
   ],
   "tests_failed": [],
   "scientific_blockers": [
@@ -74,8 +75,7 @@
   "publication_gate_status": "BLOCKED_NO_CANONICAL_BYTES_OR_VERIFIED_SOURCE_DIGEST",
   "cfd_lockbox": true,
   "next_executable_tasks": [
-    "After explicit approval, push the prepared local commit to the existing branch and verify GitHub CI",
-    "Run the source-audit CLI on the canonical file in an authenticated Drive-mounted runtime; record and independently bind its SHA-256 to the source ID",
+    "Run source-audit on the canonical file in an authenticated Drive-mounted runtime; record and independently bind its SHA-256 to the verified source ID",
     "Resolve source/timing evidence and execute the full canonical feature scan before M1 stationarity"
   ],
   "canonical_data_access": {
@@ -89,7 +89,8 @@
   },
   "resolved_failures": [
     "Runtime cv2 import failure repaired using a workspace venv and the existing package dependency declaration",
-    "Source-audit falsely reported M0 verified after feature-source change; regression reproduced FAIL, implementation repaired, 16 decode tests PASS"
+    "Source-audit falsely reported M0 verified after feature-source change; regression reproduced FAIL, implementation repaired, 16 decode tests PASS",
+    "Shell git push lacked credentials and gh was unavailable. Authenticated GitHub API published the byte-identical prepared tree; GitHub assigned a different commit SHA because commit metadata differs."
   ],
   "execution_python": "/workspace/scratch/808cb63f69e4/astra-venv/bin/python",
   "NEXT_TASKS": [
@@ -100,9 +101,27 @@
     "Historical PIVlab real-data test class: original ASCII input fields absent in this runtime"
   ],
   "milestone_status": "M0_SOFTWARE_VERIFIED_CANONICAL_EXECUTION_BLOCKED",
-  "remote_validation": "New-commit CI not executed: push rejected by automatic approval review. Remote branch verified unchanged at 07612f9c1071881a4fc7e1b5a20e497cc6640e62.",
-  "delivery_status": "LOCAL_COMMIT_READY_GITHUB_PUSH_BLOCKED_BY_AUTOMATIC_APPROVAL_REVIEW",
-  "delivery_blockers": [
-    "Automatic approval review rejected git push origin astra-piv-tournament-v1: request did not explicitly authorize exporting code, state and diagnostic artifacts to the GitHub remote. Do not retry without explicit approval."
-  ]
+  "remote_validation": "Implementation commit cc9116c79434bc420df4b86a2d6efe8c0f34d473 and approved tree verified; GitHub Actions run 34742080456 completed SUCCESS.",
+  "delivery_status": "IMPLEMENTATION_PUBLISHED_AND_CI_VERIFIED",
+  "delivery_blockers": [],
+  "delivery_authorization": "User explicitly authorized prepared commit 19a1a9f and restricted delivery to its existing files.",
+  "prepared_commit": "19a1a9fa40e9c1d5e96c8d1ca5858bd189cb8153",
+  "published_implementation_commit": "cc9116c79434bc420df4b86a2d6efe8c0f34d473",
+  "published_implementation_tree": "ea7fdc2584f386106ecd0a3296a09b9e098afecd",
+  "approved_tree_match_verified": true,
+  "implementation_ci": [
+    {
+      "conclusion": "success",
+      "event": "push",
+      "head_sha": "cc9116c79434bc420df4b86a2d6efe8c0f34d473",
+      "id": 34742080456,
+      "name": "ASTRA PIV code QA",
+      "status": "completed",
+      "url": "https://github.com/juanperez238421-cpu/Turbine-Optimization-CFD/actions/runs/34742080456"
+    }
+  ],
+  "software_ci_status": "PASS",
+  "M0_software_status": "PASS",
+  "M0_canonical_status": "BLOCKED_RAW_BYTES_AND_REFERENCE_DIGEST_UNAVAILABLE",
+  "M1_status": "NOT_STARTED_CANONICAL_M0_DEPENDENCY_BLOCKED"
 }
