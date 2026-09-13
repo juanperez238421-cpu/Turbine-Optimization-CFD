@@ -1,0 +1,25 @@
+strict_publication_mode: true
+cfd_lockbox: true
+video_scan:
+  downscale: 0.25
+  roi: null
+  publication_mode_requires_explicit_roi: true
+stationarity:
+  min_segment_pairs: 120
+  rolling_window_pairs: 60
+  plateau_max_robust_slope: 1.0
+  plateau_max_robust_cv: 1.5
+coarse_piv:
+  enabled: true
+  window_px: 36
+  grid_rows: 4
+  grid_cols: 4
+  candidate_stride: 2
+  max_pairs: 160
+tournament:
+  sample_sizes: [25, 50, 100]
+  methods: [uniform, stratified_random, quality_top, pareto_temporal, cluster_medoids, farthest_point, facility_location, spatial_coverage_log, qcrc_maximin, best_contiguous_window]
+  candidate_pool_limit_for_pairwise_methods: 500
+  bootstrap_repeats: 5
+  winner_requires_stability_fraction: 0.60
+  quality_gate_mad_multiplier: 4.0
