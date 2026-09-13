@@ -1,0 +1,59 @@
+name: Q1 real CFD visualization
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/q1-real-cfd-visualization
+    paths:
+      - 'q1_cfd_visualization/**'
+      - '.github/workflows/q1-cfd-render.yml'
+
+jobs:
+  validate-renderer:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: q1_cfd_visualization/requirements.txt
+
+      - name: Install offscreen rendering stack
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libegl1
+          python -m pip install --upgrade pip
+          pip install -r q1_cfd_visualization/requirements.txt
+
+      - name: Validate renderer
+        env:
+          PYVISTA_OFF_SCREEN: 'true'
+        run: |
+          python -m py_compile q1_cfd_visualization/render_q1.py
+          xvfb-run -a python q1_cfd_visualization/render_q1.py --help
+
+      - name: Render when real exported data are present
+        env:
+          PYVISTA_OFF_SCREEN: 'true'
+        shell: bash
+        run: |
+          if [ -f q1_cfd_visualization/cases.carolina.json ]; then
+            echo 'Real case manifest found; rendering publication figures.'
+            xvfb-run -a python q1_cfd_visualization/render_q1.py \
+              q1_cfd_visualization/cases.carolina.json \
+              --output q1_cfd_visualization/q1_rendered
+          else
+            echo 'No real-data manifest committed. Validation only.'
+            echo 'Export CFX .res with cfx5export to EnSight/CGNS, then add a local cases.carolina.json.'
+          fi
+
+      - name: Upload rendered figures
+        if: ${{ hashFiles('q1_cfd_visualization/q1_rendered/**') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: q1-real-cfd-figures
+          path: q1_cfd_visualization/q1_rendered/
+          retention-days: 30
