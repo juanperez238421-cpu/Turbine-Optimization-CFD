@@ -1,0 +1,75 @@
+from __future__ import annotations
+
+from dataclasses import asdict
+from pathlib import Path
+import json
+
+import numpy as np
+import pandas as pd
+
+from .benchmark import benchmark_selections
+from .coarse_piv import scan_coarse_piv
+from .config import AstraConfig
+from .manifest import write_selection_manifest, freeze_winner
+from .provenance import inspect_video_provenance, write_provenance_manifest, assert_publication_source
+from .selectors import run_selector, SelectionResult
+from .stationarity import detect_stationary_pool
+from .video_scan import scan_video
+
+
+def _align_reliability_to_pool(pool: pd.DataFrame, coarse_summary: pd.DataFrame, reliability: np.ndarray) -> tuple[pd.DataFrame, np.ndarray]:
+    merged=pool.merge(coarse_summary,on="pair_index",how="inner",validate="one_to_one")
+    order={int(pid):i for i,pid in enumerate(coarse_summary["pair_index"].astype(int))}
+    idx=np.array([order[int(pid)] for pid in merged["pair_index"].astype(int)],dtype=int)
+    return merged.sort_values("pair_index").reset_index(drop=True), reliability[idx]
+
+
+def run_tournament_on_pool(pool: pd.DataFrame, cfg: AstraConfig, output_dir: str | Path, reliability: np.ndarray | None = None, source_video_sha256: str | None = None) -> tuple[pd.DataFrame,dict,list[dict]]:
+    out=Path(output_dir); out.mkdir(parents=True,exist_ok=True); all_leaderboards=[]; winner_records=[]; manifest_records=[]
+    for n in cfg.tournament.sample_sizes:
+        selections=[]
+        for method in cfg.tournament.methods:
+            if method=="legacy_control" and n!=250: continue
+            try:
+                result=run_selector(method,pool,n,cfg.tournament,cfg.provenance,reliability=reliability); selections.append(result); manifest_records.append(write_selection_manifest(pool,result,out/"manifests",source_video_sha256))
+            except Exception as exc:
+                selections.append(SelectionResult(method=method,n_requested=n,pair_indices=np.array([],dtype=int),notes=[f"METHOD_FAILED: {type(exc).__name__}: {exc}"]))
+        leaderboard,meta=benchmark_selections(pool,selections,reliability=reliability); leaderboard.insert(0,"sample_size",n); leaderboard.to_csv(out/f"leaderboard_N{n}.csv",index=False)
+        (out/f"leaderboard_N{n}.json").write_text(json.dumps({"metadata":meta,"rows":leaderboard.to_dict(orient="records")},indent=2),encoding="utf-8")
+        all_leaderboards.append(leaderboard); winner_records.append({"sample_size":n,**meta})
+    combined=pd.concat(all_leaderboards,ignore_index=True) if all_leaderboards else pd.DataFrame(); combined.to_csv(out/"leaderboard_all_sample_sizes.csv",index=False)
+    valid=[r["provisional_winner"] for r in winner_records if r.get("provisional_winner")]
+    if valid:
+        counts=pd.Series(valid).value_counts(); method=str(counts.index[0]); fraction=float(counts.iloc[0]/len(valid))
+        if fraction>=cfg.tournament.winner_requires_stability_fraction: overall_status="PROVISIONAL_CROSS_N_WINNER_REQUIRES_ABLATION"; overall_winner=method
+        else: overall_status="UNRESOLVED_WINNER_NOT_STABLE_ACROSS_N"; overall_winner=None
+    else: fraction=0.0; overall_status="UNRESOLVED_NO_WINNER"; overall_winner=None
+    summary={"status":overall_status,"provisional_overall_winner":overall_winner,"cross_sample_size_winner_fraction":fraction,"per_sample_size":winner_records,"rule":"No CFD information permitted upstream. Winner is provisional until ablation/bootstrap/sensitivity."}
+    (out/"tournament_summary.json").write_text(json.dumps(summary,indent=2),encoding="utf-8"); pd.DataFrame(manifest_records).to_csv(out/"selection_manifest_index.csv",index=False)
+    return combined,summary,manifest_records
+
+
+def run_full_video_pipeline(video_path: str | Path, cfg: AstraConfig, output_dir: str | Path, allow_noncanonical_smoke: bool=False, max_frames: int|None=None)->dict:
+    out=Path(output_dir); out.mkdir(parents=True,exist_ok=True)
+    prov=inspect_video_provenance(video_path,cfg.provenance); write_provenance_manifest(prov,out/"provenance.json")
+    if cfg.strict_publication_mode and not allow_noncanonical_smoke:
+        assert_publication_source(prov,cfg.provenance)
+        if cfg.video_scan.publication_mode_requires_explicit_roi and cfg.video_scan.roi is None: raise RuntimeError("Publication mode blocked: explicit raw-image ROI is required; auto/full-frame ROI is smoke-test only.")
+    frames,pairs,video_meta=scan_video(video_path,cfg.video_scan,output_dir=out/"01_video_scan",max_frames=max_frames)
+    pool,segments,stat_meta=detect_stationary_pool(pairs,cfg.stationarity,output_dir=out/"02_stationarity")
+    if not stat_meta["consensus"]["stable"] and cfg.strict_publication_mode and not allow_noncanonical_smoke: raise RuntimeError("Publication mode blocked: no defensible stationary segment was identified.")
+    reliability=None; tournament_pool=pool.copy(); coarse_meta=None
+    if cfg.coarse_piv.enabled:
+        candidate_ids=tournament_pool["pair_index"].astype(int).to_numpy()
+        if cfg.coarse_piv.candidate_stride>1: candidate_ids=candidate_ids[::cfg.coarse_piv.candidate_stride]
+        coarse_df,reliability_raw,coarse_meta=scan_coarse_piv(video_path,candidate_ids,cfg.coarse_piv,cfg.video_scan.roi,output_dir=out/"03_coarse_piv")
+        tournament_pool,reliability=_align_reliability_to_pool(tournament_pool,coarse_df,reliability_raw); tournament_pool.to_csv(out/"03_coarse_piv"/"tournament_pool_with_piv.csv",index=False)
+    leaderboard,tournament_summary,manifests=run_tournament_on_pool(tournament_pool,cfg,out/"04_tournament",reliability=reliability,source_video_sha256=prov.sha256)
+    overall_winner=tournament_summary.get("provisional_overall_winner"); freeze=None
+    publication_freeze_allowed=bool(overall_winner and prov.publication_ready_source and stat_meta.get("consensus",{}).get("stable",False) and (not cfg.video_scan.publication_mode_requires_explicit_roi or cfg.video_scan.roi is not None) and cfg.strict_publication_mode and not allow_noncanonical_smoke)
+    if publication_freeze_allowed:
+        target_n=250 if 250 in cfg.tournament.sample_sizes else cfg.tournament.sample_sizes[-1]; match=[m for m in manifests if m["method"]==overall_winner and m["n_requested"]==target_n]
+        if match: freeze=freeze_winner(match[0],cfg.to_dict(),out/"04_tournament"/"selection_freeze.json")
+    freeze_status="PUBLICATION_SELECTION_FROZEN" if freeze is not None else "NOT_FROZEN_SMOKE_OR_UNRESOLVED_EVIDENCE"
+    result={"provenance":asdict(prov),"video_scan":video_meta,"stationarity":stat_meta,"coarse_piv":coarse_meta,"tournament":tournament_summary,"selection_freeze":freeze,"selection_freeze_status":freeze_status}
+    (out/"pipeline_result.json").write_text(json.dumps(result,indent=2),encoding="utf-8"); return result
