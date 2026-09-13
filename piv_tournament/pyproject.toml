@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "astra-piv-tournament"
-version = "0.1.0"
-description = "Quality-constrained representative PIV pair selection for GVT free-surface vortex measurements"
-readme = "README.md"
+version = "0.2.0"
+description = "Evidence-gated multi-selector PIV temporal subsampling and spatial-validation superstudy for GVT measurements"
+readme = "README_SUPERSTUDY.md"
 requires-python = ">=3.10"
 dependencies = [
   "numpy>=1.26",

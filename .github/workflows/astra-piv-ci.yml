@@ -1,0 +1,30 @@
+name: ASTRA PIV code QA
+
+on:
+  push:
+    branches: [astra-piv-tournament-v1]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: piv_tournament
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package
+        run: pip install -e .
+      - name: Compile source
+        run: python -m compileall -q src scripts
+      - name: Run software tests
+        run: python -m unittest discover -s tests -v
+      - name: Private-data boundary
+        run: |
+          echo "Canonical experimental data are intentionally not embedded in CI."
+          echo "Real-data tests skip if PIVlab fields are absent."
+          echo "Run notebooks/ASTRA_PIV_SUPERSTUDY_Q1.ipynb in authenticated Colab for canonical-data analysis."
