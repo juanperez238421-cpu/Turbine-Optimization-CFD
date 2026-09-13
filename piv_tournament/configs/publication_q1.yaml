@@ -1,0 +1,83 @@
+strict_publication_mode: true
+cfd_lockbox: true
+
+provenance:
+  canonical_video_basename: vid_2025-08-29_19-28-15.mp4
+  # BLOCKER: populate from independently verified source evidence, never from the candidate being checked.
+  canonical_sha256: null
+  canonical_reference: null
+  # Authenticated Drive metadata (2026-09-13); byte size alone does not prove identity.
+  canonical_size_bytes: 714939306
+  # Playback fps and the legacy xy/uv ratio cannot certify acquisition timing.
+  acquisition_dt_s: null
+  acquisition_dt_reference: null
+  legacy_xy_m_per_px: 0.00019061
+  legacy_uv_mps_per_px_per_frame: 0.20386
+  legacy_pair_first_a: 4250
+  legacy_pair_last_b: 4500
+  require_canonical_for_publication: true
+
+video_scan:
+  downscale: 0.25
+  # BLOCKER until reconstructed from raw evidence. Format: [x0, y0, x1, y1]
+  roi: null
+  publication_mode_requires_explicit_roi: true
+  clahe_clip_limit: 2.0
+  clahe_grid_size: 8
+  top_hat_kernel_px_small: 9
+  blob_area_min_small: 1
+  blob_area_max_small: 80
+
+stationarity:
+  methods: [pelt_rbf, robust_plateau]
+  min_segment_pairs: 500
+  pelt_penalty_scale: 1.0
+  rolling_window_pairs: 150
+  plateau_max_robust_slope: 0.15
+  plateau_max_robust_cv: 0.35
+  consensus_mode: intersection_or_longest
+
+coarse_piv:
+  enabled: true
+  # This is a selection-proxy interrogation size only. It MUST NOT be presented as the
+  # authoritative PIVlab first pass while the 32-vs-36 px blocker remains unresolved.
+  window_px: 36
+  grid_rows: 8
+  grid_cols: 8
+  candidate_stride: 1
+  max_pairs: null
+  preprocess_clahe: true
+  highpass_kernel_px: 15
+  peak_exclusion_radius_px: 2
+  use_hanning: true
+  quality_normalization: empirical_q10_q90
+  quality_low_quantile: 10
+  quality_high_quantile: 90
+
+tournament:
+  sample_sizes: [100, 150, 250]
+  methods:
+    - legacy_control
+    - uniform
+    - stratified_random
+    - quality_top
+    - pareto_temporal
+    - cluster_medoids
+    - farthest_point
+    - facility_location
+    - spatial_coverage_log
+    - qcrc_maximin
+    - best_contiguous_window
+  random_seed: 20260912
+  minimum_temporal_gap_pairs: 1
+  candidate_pool_limit_for_pairwise_methods: 2000
+  bootstrap_repeats: 20
+  bootstrap_fraction: 0.8
+  winner_requires_stability_fraction: 0.60
+  quality_gate_mad_multiplier: 4.0
+
+output:
+  output_dir: outputs
+  write_parquet: false
+  save_selected_frames: false
+  selected_frame_format: png

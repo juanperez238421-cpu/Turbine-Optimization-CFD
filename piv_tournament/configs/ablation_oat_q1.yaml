@@ -1,0 +1,36 @@
+base:
+  window_px: 36
+  q_low: 10
+  q_high: 90
+  reliability_mode: geomean
+  quality_gate_mad: 4.0
+  spatial_target_fraction_of_n: 0.25
+  lower_tail_fraction: 0.10
+scenarios:
+  - id: base
+  - id: window32
+    window_px: 32
+  - id: window48
+    window_px: 48
+  - id: norm_5_95
+    q_low: 5
+    q_high: 95
+  - id: norm_20_80
+    q_low: 20
+    q_high: 80
+  - id: pce_only
+    reliability_mode: pce_only
+  - id: ppr_only
+    reliability_mode: ppr_only
+  - id: gate_3MAD
+    quality_gate_mad: 3.0
+  - id: gate_5MAD
+    quality_gate_mad: 5.0
+  - id: spatial_target_015
+    spatial_target_fraction_of_n: 0.15
+  - id: spatial_target_040
+    spatial_target_fraction_of_n: 0.40
+  - id: lower_tail_005
+    lower_tail_fraction: 0.05
+  - id: lower_tail_020
+    lower_tail_fraction: 0.20
