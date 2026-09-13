@@ -1,0 +1,73 @@
+{
+  "status": "PASS_FULL_REAL_VIDEO_SMOKE",
+  "real_video": {
+    "basename": "vid_2025-08-29_19-36-07.mp4",
+    "sha256": "422439b944c36423db3c37e9540874280b7ced4dc5be8533b320a4b4d7810331",
+    "size_bytes": 91113099,
+    "width": 1280,
+    "height": 1024,
+    "fps": 60.0,
+    "frames": 1042
+  },
+  "canonical_provenance": {
+    "expected_source_basename": "vid_2025-08-29_19-28-15.mp4",
+    "legacy_xy_m_per_px": 0.00019061,
+    "legacy_uv_mps_per_px_per_frame": 0.20386,
+    "legacy_implied_dt_s": 0.0009350044147944667,
+    "legacy_implied_sampling_hz": 1069.513666649179,
+    "source_is_canonical_legacy_piv_video": false,
+    "video_sampling_hz": 60.0,
+    "video_dimensions_px": [1280, 1024],
+    "classification": "REAL_EXPERIMENTAL_NONCANONICAL_SMOKE_SOURCE"
+  },
+  "illumination_spectrum": {
+    "sampling_hz": 60.00000000000021,
+    "n_frames": 1042,
+    "duration_from_metrics_s": 17.35,
+    "intensity": {
+      "min": 21.580357360839844,
+      "max": 50.775997161865234,
+      "median": 37.678123855590826,
+      "relative_peak_to_peak_over_median": 0.774869786853605,
+      "coefficient_of_variation": 0.2709128350114924
+    },
+    "dominant_modulation": {
+      "frequency_hz": 6.794625719769699,
+      "period_s": 0.14717514124293732,
+      "frames_per_period": 8.83050847457627
+    },
+    "top_spectral_peaks": [
+      {"frequency_hz": 6.794625719769699, "relative_power": 1.0},
+      {"frequency_hz": 6.967370441458758, "relative_power": 0.010671470418956566},
+      {"frequency_hz": 6.679462571976992, "relative_power": 0.00831543699448058},
+      {"frequency_hz": 13.589251439539398, "relative_power": 0.008202452830123535},
+      {"frequency_hz": 6.564299424184285, "relative_power": 0.002657230975514455},
+      {"frequency_hz": 7.082533589251465, "relative_power": 0.002608582945846528},
+      {"frequency_hz": 6.449136276391578, "relative_power": 0.0013027555287309339},
+      {"frequency_hz": 7.197696737044172, "relative_power": 0.0011993358681751162},
+      {"frequency_hz": 6.333973128598871, "relative_power": 0.0007520130087466313},
+      {"frequency_hz": 7.312859884836879, "relative_power": 0.0006990407973301484}
+    ],
+    "brightest_frames_zero_based": [826, 914, 597, 50, 879, 509],
+    "darkest_frames_zero_based": [99, 646, 328, 602, 196, 743]
+  },
+  "qa_metrics": {
+    "mean_intensity_median": 37.678123855590826,
+    "std_intensity_median": 17.066809862060456,
+    "dynamic_range_median": 78.0,
+    "saturated_fraction_median": 0.0,
+    "saturated_fraction_max": 0.0,
+    "dark_fraction_median": 0.013161849975585938,
+    "dark_fraction_max": 0.08938522338867187,
+    "laplacian_variance_median": 46.942331314086914,
+    "phase_shift_mag_median_px": 0.08228497233545333,
+    "phase_shift_mag_p95_px": 0.18808779046777882,
+    "phase_response_median": 1.035621367022395,
+    "interframe_mad_median": 6.872534275054932
+  },
+  "tests": {
+    "return_code": 0,
+    "passed": true,
+    "count_expected": 13
+  }
+}
