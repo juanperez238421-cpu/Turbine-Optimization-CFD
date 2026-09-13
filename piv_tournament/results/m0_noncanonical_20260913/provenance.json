@@ -1,0 +1,30 @@
+{
+  "path": "/workspace/scratch/808cb63f69e4/project_sources/01-MicrosoftTeams-video.mp4",
+  "basename": "01-MicrosoftTeams-video.mp4",
+  "sha256": "cf9e03226a8753105cbcdd0d14411e9aa87946555aaa736bba85ee2084b4392c",
+  "size_bytes": 167012076,
+  "width": 1920,
+  "height": 1080,
+  "fps": 15.999862172581908,
+  "frame_count": 26932,
+  "duration_s": 1683.2645,
+  "codec": "h264",
+  "is_canonical_basename": false,
+  "canonical_sampling_relative_error": 0.9850400582325328,
+  "publication_ready_source": false,
+  "notes": [
+    "Basename does not match canonical PIVlab provenance (vid_2025-08-29_19-28-15.mp4).",
+    "Video fps 15.9999 differs from legacy PIVlab-implied 1069.51 Hz.",
+    "BLOCKER: independently recorded canonical SHA-256 is absent; basename/fps cannot prove identity.",
+    "BLOCKER: canonical reference evidence citation is absent.",
+    "BLOCKER: byte size differs from the canonical reference.",
+    "BLOCKER: acquisition delta-t evidence unresolved; container playback fps is not an acquisition clock."
+  ],
+  "expected_sha256": null,
+  "sha256_matches_reference": false,
+  "canonical_reference": null,
+  "size_matches_reference": false,
+  "acquisition_dt_s": null,
+  "acquisition_timing_resolved": false,
+  "acquisition_dt_reference": null
+}

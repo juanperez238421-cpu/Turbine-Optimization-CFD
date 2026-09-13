@@ -1,0 +1,11 @@
+# ASTRA progress
+
+- 2026-09-13 UTC | M0 initialization | Added ASTRA_STATE.json and ASTRA_PROGRESS.md, absent at base commit 07612f9. | Verified clean development branch and two successful base CI runs. | Existing retrospective selector result remains unresolved; CFD locked. | Next: implement and execute source identity and decode-completeness checks.
+
+- 2026-09-13 UTC | M0 source guards | Extended provenance, scan metadata, CLI and both video pipelines; configured explicit null digest/timing blockers. | Compile PASS; seven provenance tests and original two software tests PASS. | Canonical Drive metadata verified (714939306 bytes); download blocked by 268435456-byte connector limit. No checksum returned by metadata adapter. | Next: integration tests and running noncanonical real-video decode diagnostic.
+
+- 2026-09-13 UTC | M0 final source integrity | Added a regression reproducing a false M0 success after source change during feature scanning, then fixed run_source_audit. | Reproduced FAIL; focused suite 16/16 PASS after fix. Runtime cv2 import repaired in workspace venv using declared package dependencies. | Source audit stays blocked when the bytes change. | Next: real-video rerun, full regression and commit.
+
+- 2026-09-13 UTC | M0 real-data regression and persistence | Executed source-audit CLI on the attached noncanonical recording; saved configuration, provenance, decode audit, frame/pair features, execution hashes and regression log. | Full decode: 26932 frames, no errors, source hash unchanged. Feature scan: 32 frames / 31 adjacent pairs, correctly incomplete. Compile PASS; 26 software + 4 real-video regression tests PASS; historical PIVlab class skipped (missing private inputs). | SUPPORTED software safeguards; canonical experimental execution remains BLOCKED by connector size limit. Publication selector null; CFD locked. | Next: execute canonical source audit in an authenticated Drive-mounted runtime.
+
+- 2026-09-13 UTC | Delivery | Integrated changes committed locally; git push rejected by automatic approval review because export of code/state/diagnostic artifacts to GitHub was not explicitly authorized. | Remote branch verified unchanged at 07612f9. New-commit CI therefore not executed. | BLOCKED delivery; no push retry attempted. | Next: explicit approval for the prepared push; canonical data blocker is independent.

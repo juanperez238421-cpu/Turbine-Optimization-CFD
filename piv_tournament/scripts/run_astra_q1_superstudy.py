@@ -12,7 +12,8 @@ import yaml
 
 from astra_piv.coarse_piv import scan_coarse_piv, _empirical_quantile_scale
 from astra_piv.config import load_config
-from astra_piv.provenance import inspect_video_provenance, assert_publication_source
+from astra_piv.provenance import (inspect_video_provenance, assert_publication_source, write_provenance_manifest,
+                                 audit_video_decode, assert_complete_scan, source_evidence_flags)
 from astra_piv.stationarity import detect_stationary_pool
 from astra_piv.video_scan import scan_video
 from astra_piv.production_superstudy import run_nested_spatial_cv_portfolio, finalize_superstudy_decision
@@ -46,11 +47,21 @@ def main():
 
     out = Path(args.output_dir); out.mkdir(parents=True, exist_ok=True)
     cfg = load_config(args.config); cfg.video_scan.roi = list(args.roi)
+    if not cfg.cfd_lockbox:
+        raise RuntimeError("ASTRA experimental analysis requires cfd_lockbox=true.")
     prov = inspect_video_provenance(args.video, cfg.provenance)
+    write_provenance_manifest(prov, out/"provenance.json")
     assert_publication_source(prov, cfg.provenance)
 
     # CFD is deliberately absent from this executable.
-    frames, pairs, video_meta = scan_video(args.video, cfg.video_scan, output_dir=out/"01_video_scan", max_frames=args.max_frames)
+    decode = audit_video_decode(args.video, prov.sha256)
+    (out/"decode_audit.json").write_text(json.dumps(decode, indent=2), encoding="utf-8")
+    if not decode["complete"] or (prov.frame_count is not None and prov.frame_count != decode["decoded_frame_count"]):
+        raise RuntimeError("Publication mode blocked: independent full decode failed or contradicts frame metadata.")
+    frames, pairs, video_meta = scan_video(args.video, cfg.video_scan, output_dir=out/"01_video_scan",
+                                         max_frames=args.max_frames, verified_frame_count=decode["decoded_frame_count"],
+                                         expected_source_sha256=prov.sha256)
+    assert_complete_scan(video_meta, decode)
     pool, segments, stat_meta = detect_stationary_pool(pairs, cfg.stationarity, output_dir=out/"02_stationarity")
     if not stat_meta.get("consensus", {}).get("stable", False):
         raise RuntimeError("ASTRA blocked: no defensible stationary population.")
@@ -96,13 +107,10 @@ def main():
     ranked_all.to_csv(superdir/"all_ablation_ranked_scenarios.csv", index=False)
 
     evidence = EvidenceState(
-        canonical_video_confirmed=bool(prov.publication_ready_source),
-        canonical_video_sha256_recorded=bool(prov.sha256),
-        full_raw_video_scanned=args.max_frames is None,
+        **source_evidence_flags(prov, video_meta, decode),
         stationary_interval_resolved=bool(stat_meta.get("consensus",{}).get("stable",False)),
         explicit_roi_resolved=True,
         calibration_resolved=bool(args.calibration_resolved),
-        delta_t_resolved=True,
         pivlab_settings_resolved=bool(args.pivlab_settings_resolved),
         piv_native_quality_available=True,
         spatial_reliability_available=True,
@@ -116,7 +124,7 @@ def main():
     )
     decision = finalize_superstudy_decision(ranked_all, evidence_state=evidence, output_dir=superdir)
     (superdir/"ablation_scenarios.json").write_text(json.dumps(scenario_meta, indent=2, default=str), encoding="utf-8")
-    context = {"provenance": prov.__dict__, "video_scan": video_meta, "stationarity": stat_meta, "cfd_used": False}
+    context = {"provenance": prov.__dict__, "video_scan": video_meta, "decode_audit": decode, "stationarity": stat_meta, "cfd_used": False}
     (superdir/"SUPERSTUDY_CONTEXT.json").write_text(json.dumps(context, indent=2, default=str), encoding="utf-8")
     print(json.dumps(decision["numerical_decision"], indent=2))
     print(json.dumps(decision["scientific_publication_gate"], indent=2))

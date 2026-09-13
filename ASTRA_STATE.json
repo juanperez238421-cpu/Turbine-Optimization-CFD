@@ -1,0 +1,108 @@
+{
+  "current_milestone": "M0 \u2014 Canonical data access and provenance",
+  "current_question": "Can source identity and complete decoding be independently verified before publication analysis?",
+  "base_commit": "07612f9c1071881a4fc7e1b5a20e497cc6640e62",
+  "completed_capabilities": [
+    "Independent canonical-reference digest and byte-size comparison",
+    "Acquisition timing separated from container playback fps",
+    "Explicit feature-scan termination and completeness metadata",
+    "Source-audit CLI integrated with the existing package",
+    "Full-decode guards integrated before stationarity in both video pipelines",
+    "Source integrity verified again after feature scanning",
+    "Source-audit final status rejects a changed file",
+    "Decode and source-regression tests wired into CI"
+  ],
+  "existing_capabilities_not_reaudited": [
+    "stationarity",
+    "coarse PIV",
+    "selector portfolio",
+    "spatial held-out validation",
+    "temporal robustness",
+    "convergence",
+    "scientific publication gate"
+  ],
+  "validated_real_data": [
+    {
+      "file": "MicrosoftTeams-video.mp4",
+      "evidence_class": "REAL-DATA REGRESSION \u2014 noncanonical video diagnostic",
+      "source_sha256": "cf9e03226a8753105cbcdd0d14411e9aa87946555aaa736bba85ee2084b4392c",
+      "full_decoded_frames": 26932,
+      "feature_scan_frames": 32,
+      "adjacent_pairs": 31,
+      "feature_scan_complete": false,
+      "source_unchanged": true,
+      "canonical_experimental_result": false
+    }
+  ],
+  "real_data_files_used": [
+    "../project_sources/01-MicrosoftTeams-video.mp4"
+  ],
+  "tests_passed": [
+    "Python source/scripts/tests compilation PASS",
+    "26 software unit/integration tests PASS",
+    "4 real-video diagnostic regression tests PASS",
+    "Git diff whitespace check PASS"
+  ],
+  "tests_failed": [],
+  "scientific_blockers": [
+    "Canonical bytes unavailable: authenticated Drive fetch exceeds the connector 268435456-byte limit; digest and canonical decode unverified",
+    "Audited ROI unavailable",
+    "Calibration / camera-resolution contradictions unresolved",
+    "Historical first interrogation pass 32 px versus 36 px",
+    "Exact historical PIVlab settings and filtering thresholds unavailable",
+    "Canonical stationarity, convergence, uncertainty budget, GCI and final PIV\u2013CFD agreement not reproduced"
+  ],
+  "software_blockers": [],
+  "sensitivity_parameters": [
+    "coarse interrogation window 32 px versus 36 px"
+  ],
+  "active_hypotheses": [],
+  "candidate_methods": [],
+  "rejected_methods": [],
+  "methods_not_yet_tested": [],
+  "current_best_evidence": {
+    "prior_regression_reference": "piv_tournament/results/REAL_11FIELD_REGRESSION.md",
+    "prior_regression_scope": "11 historical PIVlab fields; retrospective evidence; not rerun in this session",
+    "prior_regression_decision": "UNRESOLVED_DECISION_RULE_DISAGREEMENT",
+    "m0_current_run": "piv_tournament/results/m0_noncanonical_20260913/source_audit.json",
+    "execution_manifest": "piv_tournament/results/m0_noncanonical_20260913/execution_manifest.json",
+    "regression_log": "piv_tournament/results/m0_noncanonical_20260913/regression_tests.log",
+    "interpretation": "SUPPORTED: source/decode safeguards function on test fixtures and a real noncanonical recording. BLOCKED: canonical experimental population and selector decision."
+  },
+  "current_numerical_leader": null,
+  "publication_selector": null,
+  "publication_gate_status": "BLOCKED_NO_CANONICAL_BYTES_OR_VERIFIED_SOURCE_DIGEST",
+  "cfd_lockbox": true,
+  "next_executable_tasks": [
+    "After explicit approval, push the prepared local commit to the existing branch and verify GitHub CI",
+    "Run the source-audit CLI on the canonical file in an authenticated Drive-mounted runtime; record and independently bind its SHA-256 to the source ID",
+    "Resolve source/timing evidence and execute the full canonical feature scan before M1 stationarity"
+  ],
+  "canonical_data_access": {
+    "drive_file_id": "1AqnbXPiEFmCsUeO3WlwkuxolkxI7af6U",
+    "basename": "vid_2025-08-29_19-28-15.mp4",
+    "size_bytes": 714939306,
+    "modified_time": "2025-08-30T00:30:42.000Z",
+    "access_status": "METADATA_VERIFIED_DOWNLOAD_BLOCKED",
+    "download_error": "HTTP 413: file exceeds connector 268435456-byte limit",
+    "sha256": null
+  },
+  "resolved_failures": [
+    "Runtime cv2 import failure repaired using a workspace venv and the existing package dependency declaration",
+    "Source-audit falsely reported M0 verified after feature-source change; regression reproduced FAIL, implementation repaired, 16 decode tests PASS"
+  ],
+  "execution_python": "/workspace/scratch/808cb63f69e4/astra-venv/bin/python",
+  "NEXT_TASKS": [
+    "M0 canonical bytes and independently bound source digest remain blocked",
+    "M1 canonical stationarity after M0 source evidence passes"
+  ],
+  "tests_skipped": [
+    "Historical PIVlab real-data test class: original ASCII input fields absent in this runtime"
+  ],
+  "milestone_status": "M0_SOFTWARE_VERIFIED_CANONICAL_EXECUTION_BLOCKED",
+  "remote_validation": "New-commit CI not executed: push rejected by automatic approval review. Remote branch verified unchanged at 07612f9c1071881a4fc7e1b5a20e497cc6640e62.",
+  "delivery_status": "LOCAL_COMMIT_READY_GITHUB_PUSH_BLOCKED_BY_AUTOMATIC_APPROVAL_REVIEW",
+  "delivery_blockers": [
+    "Automatic approval review rejected git push origin astra-piv-tournament-v1: request did not explicitly authorize exporting code, state and diagnostic artifacts to the GitHub remote. Do not retry without explicit approval."
+  ]
+}

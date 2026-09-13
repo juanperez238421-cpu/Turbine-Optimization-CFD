@@ -9,7 +9,7 @@ import pandas as pd
 
 from .archive import index_archive, publication_targets, extract_members, find_first
 from .config import load_config
-from .pipeline import run_full_video_pipeline, run_tournament_on_pool
+from .pipeline import run_full_video_pipeline, run_tournament_on_pool, run_source_audit
 from .provenance import inspect_video_provenance
 from .pivlab_ascii import audit_pivlab_files
 
@@ -44,6 +44,13 @@ def cmd_full(args):
     print(json.dumps(result, indent=2))
 
 
+def cmd_source_audit(args):
+    cfg = load_config(args.config)
+    result = run_source_audit(args.video, cfg, args.output_dir,
+                              scan_features=args.scan_features, max_frames=args.max_frames)
+    print(json.dumps(result, indent=2))
+
+
 def cmd_tournament_csv(args):
     cfg = load_config(args.config)
     df = pd.read_csv(args.pair_csv)
@@ -63,6 +70,14 @@ def cmd_pivlab_audit(args):
 def build_parser():
     p = argparse.ArgumentParser(prog="astra-piv")
     sub = p.add_subparsers(dest="command", required=True)
+
+    s = sub.add_parser("source-audit", help="Verify source identity and full decode; never select experimental pairs")
+    s.add_argument("video")
+    s.add_argument("--config")
+    s.add_argument("--output-dir", required=True)
+    s.add_argument("--scan-features", action="store_true")
+    s.add_argument("--max-frames", type=int, help="Limit optional feature scan only; always reported as partial when reached")
+    s.set_defaults(func=cmd_source_audit)
 
     a = sub.add_parser("archive-index", help="Index a ZIP/RAR without bulk extraction")
     a.add_argument("archive")

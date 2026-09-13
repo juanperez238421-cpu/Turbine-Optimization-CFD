@@ -3,6 +3,14 @@ cfd_lockbox: true
 
 provenance:
   canonical_video_basename: vid_2025-08-29_19-28-15.mp4
+  # BLOCKER: populate from independently verified source evidence, never from the candidate being checked.
+  canonical_sha256: null
+  canonical_reference: null
+  # Authenticated Drive metadata (2026-09-13); byte size alone does not prove identity.
+  canonical_size_bytes: 714939306
+  # Playback fps and the legacy xy/uv ratio cannot certify acquisition timing.
+  acquisition_dt_s: null
+  acquisition_dt_reference: null
   legacy_xy_m_per_px: 0.00019061
   legacy_uv_mps_per_px_per_frame: 0.20386
   legacy_pair_first_a: 4250

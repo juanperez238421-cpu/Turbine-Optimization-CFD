@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from .config import VideoScanConfig
+from .provenance import sha256_file
 
 
 EPS = 1e-12
@@ -125,39 +126,69 @@ def _phase_pair_metrics(prev_gray: np.ndarray, curr_gray: np.ndarray, cfg: Video
             "phase_response": float(response)}
 
 
-def scan_video(video_path: str | Path, cfg: VideoScanConfig, output_dir: str | Path | None = None, max_frames: int | None = None) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
+def scan_video(video_path: str | Path, cfg: VideoScanConfig, output_dir: str | Path | None = None, max_frames: int | None = None, verified_frame_count: int | None = None, expected_source_sha256: str | None = None) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     """Decode real video and compute frame/pair metrics after illumination normalization."""
+    if max_frames is not None and (isinstance(max_frames, bool) or not isinstance(max_frames, int) or max_frames < 1):
+        raise ValueError("max_frames must be a positive integer or None")
+    if not (np.isfinite(cfg.downscale) and 0 < cfg.downscale <= 1):
+        raise ValueError("downscale must be finite and in (0, 1]")
     video_path = Path(video_path)
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened(): raise RuntimeError(f"Cannot open video: {video_path}")
     width = int(round(cap.get(cv2.CAP_PROP_FRAME_WIDTH))); height = int(round(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
     fps = float(cap.get(cv2.CAP_PROP_FPS)); declared = int(round(cap.get(cv2.CAP_PROP_FRAME_COUNT)))
     frame_rows=[]; pair_rows=[]; prev_gray=None; decoded=0; first_shape=None; shape_mismatch=0
-    while True:
-        if max_frames is not None and decoded >= max_frames: break
-        ok, frame = cap.read()
-        if not ok: break
-        if first_shape is None: first_shape = tuple(frame.shape)
-        elif tuple(frame.shape) != first_shape: shape_mismatch += 1
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        fr={"frame_index":decoded,"time_s":decoded/fps if fps>0 else np.nan,**compute_frame_metrics(gray,cfg)}
-        frame_rows.append(fr)
-        if prev_gray is not None:
-            pr={"pair_index":decoded-1,"frame_a":decoded-1,"frame_b":decoded,
-                "time_a_s":(decoded-1)/fps if fps>0 else np.nan,"time_b_s":decoded/fps if fps>0 else np.nan,
-                **_phase_pair_metrics(prev_gray,gray,cfg)}
-            prev_fr=frame_rows[-2]
-            for col in ["saturated_fraction_ge250","dark_fraction_le5","normalized_laplacian_variance","normalized_tenengrad","particle_like_blob_density_proxy","particle_like_area_fraction_proxy","large_bright_component_area_fraction_proxy","optical_dark_region_fraction_proxy"]:
-                a_val,b_val=float(prev_fr[col]),float(fr[col]); pr[f"pair_{col}_mean"]=0.5*(a_val+b_val); pr[f"pair_{col}_max"]=max(a_val,b_val)
-            for col in ["optical_dark_region_cx_proxy","optical_dark_region_cy_proxy"]:
-                a_val,b_val=float(prev_fr[col]),float(fr[col]); pr[f"pair_{col}_mean"]=float(np.nanmean([a_val,b_val])); pr[f"pair_{col}_jump"]=float(abs(b_val-a_val)) if np.isfinite(a_val) and np.isfinite(b_val) else np.nan
-            pair_rows.append(pr)
-        prev_gray=gray; decoded+=1
-    cap.release()
+    termination = "READ_STOP"
+    try:
+        while True:
+            if max_frames is not None and decoded >= max_frames:
+                termination = "FRAME_LIMIT"
+                break
+            ok, frame = cap.read()
+            if not ok: break
+            if first_shape is None: first_shape = tuple(frame.shape)
+            elif tuple(frame.shape) != first_shape:
+                shape_mismatch += 1
+                termination = "SHAPE_CHANGE"
+                break
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            fr={"frame_index":decoded,"time_s":decoded/fps if fps>0 else np.nan,**compute_frame_metrics(gray,cfg)}
+            frame_rows.append(fr)
+            if prev_gray is not None:
+                pr={"pair_index":decoded-1,"frame_a":decoded-1,"frame_b":decoded,
+                    "time_a_s":(decoded-1)/fps if fps>0 else np.nan,"time_b_s":decoded/fps if fps>0 else np.nan,
+                    **_phase_pair_metrics(prev_gray,gray,cfg)}
+                prev_fr=frame_rows[-2]
+                for col in ["saturated_fraction_ge250","dark_fraction_le5","normalized_laplacian_variance","normalized_tenengrad","particle_like_blob_density_proxy","particle_like_area_fraction_proxy","large_bright_component_area_fraction_proxy","optical_dark_region_fraction_proxy"]:
+                    a_val,b_val=float(prev_fr[col]),float(fr[col]); pr[f"pair_{col}_mean"]=0.5*(a_val+b_val); pr[f"pair_{col}_max"]=max(a_val,b_val)
+                for col in ["optical_dark_region_cx_proxy","optical_dark_region_cy_proxy"]:
+                    a_val,b_val=float(prev_fr[col]),float(fr[col]); finite=[v for v in (a_val,b_val) if np.isfinite(v)]
+                    pr[f"pair_{col}_mean"]=float(np.mean(finite)) if finite else np.nan
+                    pr[f"pair_{col}_jump"]=float(abs(b_val-a_val)) if len(finite)==2 else np.nan
+                pair_rows.append(pr)
+            prev_gray=gray; decoded+=1
+    finally:
+        cap.release()
     frames=pd.DataFrame(frame_rows); pairs=pd.DataFrame(pair_rows)
+    expected = verified_frame_count if verified_frame_count is not None else declared
+    declaration_agrees = declared <= 0 or decoded == declared
+    complete = bool(termination == "READ_STOP" and expected > 1 and decoded == expected
+                    and declaration_agrees and shape_mismatch == 0 and len(pairs) == decoded - 1)
+    digest_after = sha256_file(video_path) if expected_source_sha256 is not None else None
+    unchanged = digest_after == expected_source_sha256 if expected_source_sha256 is not None else None
+    if unchanged is False:
+        complete = False
+        termination = "SOURCE_CHANGED"
+    if termination == "READ_STOP":
+        termination = "COMPLETE_COUNT_MATCH" if complete else "UNVERIFIED_OR_EARLY_READ_STOP"
     meta={"video_path":str(video_path),"width":width,"height":height,"fps":fps,"declared_frame_count":declared,
           "decoded_frame_count":decoded,"pair_count":len(pairs),"first_frame_shape_bgr":list(first_shape) if first_shape is not None else None,
-          "shape_mismatch_count":shape_mismatch,"roi":cfg.roi,"downscale":cfg.downscale}
+          "shape_mismatch_count":shape_mismatch,"roi":cfg.roi,"downscale":cfg.downscale,
+          "requested_max_frames":max_frames,"termination_reason":termination,"scan_complete":complete,
+          "verified_frame_count":verified_frame_count,
+          "source_sha256_after_scan":digest_after,"source_unchanged":unchanged,
+          "frame_index_origin":0,"pair_definition":"pair i = (frame i, frame i+1)",
+          "time_columns_basis":"frame index / average container playback fps; not verified acquisition time"}
     if output_dir is not None:
         out=Path(output_dir); out.mkdir(parents=True,exist_ok=True)
         frames.to_csv(out/"frame_features.csv",index=False); pairs.to_csv(out/"pair_features_image.csv",index=False)

@@ -14,6 +14,12 @@ except Exception:  # pragma: no cover
 @dataclass
 class ProvenanceConfig:
     canonical_video_basename: str = "vid_2025-08-29_19-28-15.mp4"
+    # Independent reference evidence; never populate these from the file under test.
+    canonical_sha256: str | None = None
+    canonical_reference: str | None = None
+    canonical_size_bytes: int | None = None
+    acquisition_dt_s: float | None = None
+    acquisition_dt_reference: str | None = None
     legacy_xy_m_per_px: float = 0.00019061
     legacy_uv_mps_per_px_per_frame: float = 0.20386
     legacy_pair_first_a: int = 4250

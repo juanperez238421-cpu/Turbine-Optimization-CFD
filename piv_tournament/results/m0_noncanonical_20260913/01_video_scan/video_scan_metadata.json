@@ -1,0 +1,26 @@
+{
+  "video_path": "/workspace/scratch/808cb63f69e4/project_sources/01-MicrosoftTeams-video.mp4",
+  "width": 1920,
+  "height": 1080,
+  "fps": 15.999862172581908,
+  "declared_frame_count": 26932,
+  "decoded_frame_count": 32,
+  "pair_count": 31,
+  "first_frame_shape_bgr": [
+    1080,
+    1920,
+    3
+  ],
+  "shape_mismatch_count": 0,
+  "roi": null,
+  "downscale": 0.25,
+  "requested_max_frames": 32,
+  "termination_reason": "FRAME_LIMIT",
+  "scan_complete": false,
+  "verified_frame_count": 26932,
+  "source_sha256_after_scan": "cf9e03226a8753105cbcdd0d14411e9aa87946555aaa736bba85ee2084b4392c",
+  "source_unchanged": true,
+  "frame_index_origin": 0,
+  "pair_definition": "pair i = (frame i, frame i+1)",
+  "time_columns_basis": "frame index / average container playback fps; not verified acquisition time"
+}

@@ -19,14 +19,18 @@ jobs:
           python-version: "3.11"
       - name: Install package
         run: pip install -e .
+      - name: Install independent video decoder
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
       - name: Compile source
         run: python -m compileall -q src scripts
       - name: Run CI-safe software tests
-        run: python -m unittest discover -s tests -p 'test_astra_superstudy_core.py' -v
+        run: python -m unittest discover -s tests -p '*core.py' -v
       - name: Verify real-data test module skips without private data
         env:
           ASTRA_REAL_PIVLAB_DIR: /tmp/astra-no-private-data
-        run: python -m unittest discover -s tests -p 'test_astra_superstudy_real.py' -v
+        run: python -m unittest discover -s tests -p '*real.py' -v
       - name: Private-data boundary
         run: |
           echo "Canonical experimental data are intentionally not embedded in CI."
