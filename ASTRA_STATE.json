@@ -1,5 +1,5 @@
 {
-  "current_milestone": "M0 \u2014 Canonical data access and provenance",
+  "current_milestone": "M0 — Canonical data access and provenance",
   "current_question": "Can the canonical video be accessed and its independently bound digest and full decode verified before M1 stationarity?",
   "base_commit": "07612f9c1071881a4fc7e1b5a20e497cc6640e62",
   "completed_capabilities": [
@@ -24,7 +24,7 @@
   "validated_real_data": [
     {
       "file": "MicrosoftTeams-video.mp4",
-      "evidence_class": "REAL-DATA REGRESSION \u2014 noncanonical video diagnostic",
+      "evidence_class": "REAL-DATA REGRESSION — noncanonical video diagnostic",
       "source_sha256": "cf9e03226a8753105cbcdd0d14411e9aa87946555aaa736bba85ee2084b4392c",
       "full_decoded_frames": 26932,
       "feature_scan_frames": 32,
@@ -32,15 +32,37 @@
       "feature_scan_complete": false,
       "source_unchanged": true,
       "canonical_experimental_result": false
+    },
+    {
+      "file": "historical 250-field PIVlab export population",
+      "evidence_class": "RETROSPECTIVE REAL-DATA TOURNAMENT — downstream PIVlab evidence",
+      "n_real_fields": 250,
+      "n_active_cells": 1192,
+      "n_evaluations": 660,
+      "n_scenarios": 60,
+      "n_algorithms": 11,
+      "sample_sizes": [25, 50, 100, 150],
+      "seeds": [20260912, 20260913, 20260914],
+      "folds": 5,
+      "algorithm_errors": 0,
+      "direct_vector_fraction_mean": 0.5542080536912751,
+      "decision": "UNRESOLVED_DECISION_RULE_DISAGREEMENT",
+      "leading_method": "uniform_baseline",
+      "rule_consensus_fraction": 0.6,
+      "publication_selector": null,
+      "canonical_experimental_result": false,
+      "cfd_used": false
     }
   ],
   "real_data_files_used": [
-    "../project_sources/01-MicrosoftTeams-video.mp4"
+    "../project_sources/01-MicrosoftTeams-video.mp4",
+    "historical PIVlab 250-field export population associated with source frames 4250–4500"
   ],
   "tests_passed": [
     "Python source/scripts/tests compilation PASS",
     "26 software unit/integration tests PASS",
     "4 real-video diagnostic regression tests PASS",
+    "9/9 historical PIVlab real-data tournament tests PASS",
     "Git diff whitespace check PASS",
     "GitHub Actions implementation CI PASS: run 34742080456, job 103683366352; package install, FFmpeg install, compile, software tests, private-input skip checks"
   ],
@@ -51,7 +73,7 @@
     "Calibration / camera-resolution contradictions unresolved",
     "Historical first interrogation pass 32 px versus 36 px",
     "Exact historical PIVlab settings and filtering thresholds unavailable",
-    "Canonical stationarity, convergence, uncertainty budget, GCI and final PIV\u2013CFD agreement not reproduced"
+    "Canonical stationarity, convergence, uncertainty budget, GCI and final PIV–CFD agreement not reproduced"
   ],
   "software_blockers": [],
   "sensitivity_parameters": [
@@ -63,12 +85,21 @@
   "methods_not_yet_tested": [],
   "current_best_evidence": {
     "prior_regression_reference": "piv_tournament/results/REAL_11FIELD_REGRESSION.md",
-    "prior_regression_scope": "11 historical PIVlab fields; retrospective evidence; not rerun in this session",
+    "prior_regression_scope": "11 historical PIVlab fields; retrospective evidence",
     "prior_regression_decision": "UNRESOLVED_DECISION_RULE_DISAGREEMENT",
+    "real_250field_tournament_reference": "piv_tournament/results/REAL_250FIELD_TOURNAMENT_20260913.md",
+    "real_250field_tournament_decision": "UNRESOLVED_DECISION_RULE_DISAGREEMENT",
+    "real_250field_tournament_consensus": 0.6,
+    "real_250field_tournament_votes": {
+      "uniform_baseline": 3,
+      "temporal_quality_stratified": 2,
+      "spatial_lower_tail": 1
+    },
+    "manuscript_working_draft": "manuscript/Q1_RESULTS_WORKING_DRAFT.md",
     "m0_current_run": "piv_tournament/results/m0_noncanonical_20260913/source_audit.json",
     "execution_manifest": "piv_tournament/results/m0_noncanonical_20260913/execution_manifest.json",
     "regression_log": "piv_tournament/results/m0_noncanonical_20260913/regression_tests.log",
-    "interpretation": "SUPPORTED: source/decode safeguards function on test fixtures and a real noncanonical recording. BLOCKED: canonical experimental population and selector decision."
+    "interpretation": "SUPPORTED: source/decode safeguards function on test fixtures and a real noncanonical recording; the 250-field retrospective PIVlab tournament executes cleanly but does not produce sufficient decision-rule consensus. BLOCKED: canonical experimental population, publication selector, stationarity, and final PIV–CFD validation."
   },
   "current_numerical_leader": null,
   "publication_selector": null,
@@ -76,7 +107,8 @@
   "cfd_lockbox": true,
   "next_executable_tasks": [
     "Run source-audit on the canonical file in an authenticated Drive-mounted runtime; record and independently bind its SHA-256 to the verified source ID",
-    "Resolve source/timing evidence and execute the full canonical feature scan before M1 stationarity"
+    "Resolve source/timing evidence and execute the full canonical feature scan before M1 stationarity",
+    "After M0 passes, run canonical M1 stationarity before allowing the 250-field tournament to influence publication selection"
   ],
   "canonical_data_access": {
     "drive_file_id": "1AqnbXPiEFmCsUeO3WlwkuxolkxI7af6U",
@@ -98,7 +130,7 @@
     "M1 canonical stationarity after M0 source evidence passes"
   ],
   "tests_skipped": [
-    "Historical PIVlab real-data test class: original ASCII input fields absent in this runtime"
+    "Canonical-video execution: complete source bytes unavailable in this runtime"
   ],
   "milestone_status": "M0_SOFTWARE_VERIFIED_CANONICAL_EXECUTION_BLOCKED",
   "remote_validation": "Implementation commit cc9116c79434bc420df4b86a2d6efe8c0f34d473 and approved tree verified; GitHub Actions run 34742080456 completed SUCCESS.",
