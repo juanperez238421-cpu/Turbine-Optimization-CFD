@@ -1,0 +1,84 @@
+name: Q1 CFX real-data render (self-hosted ANSYS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      case_manifest:
+        description: 'Path to a Carolina case manifest JSON on the self-hosted runner'
+        required: true
+        default: 'D:\Carolina_Q1\cases.carolina.json'
+      cfx_bin:
+        description: 'ANSYS CFX bin directory containing cfx5export.exe'
+        required: true
+        default: 'C:\Program Files\ANSYS Inc\v241\CFX\bin'
+
+jobs:
+  render-real-cfx:
+    # Register the workstation with labels: self-hosted, windows, ansys-cfx
+    runs-on: [self-hosted, windows, ansys-cfx]
+    timeout-minutes: 180
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate real-case manifest
+        shell: pwsh
+        run: |
+          if (-not (Test-Path '${{ inputs.case_manifest }}')) {
+            throw 'Case manifest not found: ${{ inputs.case_manifest }}'
+          }
+          Get-Content '${{ inputs.case_manifest }}' | ConvertFrom-Json | Out-Null
+
+      - name: Export proprietary CFX results to EnSight Gold
+        shell: pwsh
+        run: |
+          $cfg = Get-Content '${{ inputs.case_manifest }}' | ConvertFrom-Json
+          $exportRoot = Join-Path $env:RUNNER_TEMP 'carolina_q1_exports'
+          New-Item -ItemType Directory -Force -Path $exportRoot | Out-Null
+          foreach ($c in $cfg.cases) {
+            if (-not $c.results_file) { continue }
+            if (-not (Test-Path $c.results_file)) { throw "Missing CFX result: $($c.results_file)" }
+            $caseOut = Join-Path $exportRoot $c.id
+            New-Item -ItemType Directory -Force -Path $caseOut | Out-Null
+            $base = Join-Path $caseOut $c.id
+            $params = @{
+              ResultsFile = $c.results_file
+              OutputBase  = $base
+              CfxBin      = '${{ inputs.cfx_bin }}'
+            }
+            if ($null -ne $c.timestep -and [int]$c.timestep -ge 0) { $params.Timestep = [int]$c.timestep }
+            ./q1_cfd_visualization/export_cfx_to_ensight.ps1 @params
+            # cfx5export may create .case/.encas depending on release/options; locate the case descriptor.
+            $caseFile = Get-ChildItem -Path $caseOut -Recurse -File | Where-Object { $_.Extension -in '.case','.encas' } | Select-Object -First 1
+            if (-not $caseFile) { throw "No EnSight case descriptor found for $($c.id)" }
+            $c.file = $caseFile.FullName
+          }
+          $renderManifest = Join-Path $exportRoot 'cases.render.json'
+          $cfg | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $renderManifest
+          "RENDER_MANIFEST=$renderManifest" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install VTK/PyVista renderer
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r q1_cfd_visualization/requirements.txt
+
+      - name: Render Q1 figures from exported real data
+        shell: pwsh
+        env:
+          PYVISTA_OFF_SCREEN: 'true'
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'carolina_q1_figures'
+          python q1_cfd_visualization/render_q1.py $env:RENDER_MANIFEST --output $out
+          "FIGURE_DIR=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Upload publication figures and render audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: carolina-q1-real-cfd-figures
+          path: ${{ env.FIGURE_DIR }}
+          retention-days: 30

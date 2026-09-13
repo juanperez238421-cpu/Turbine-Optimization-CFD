@@ -1,0 +1,50 @@
+{
+  "cases": [
+    {
+      "id": "parque_i",
+      "label": "Parque I",
+      "status": "matched",
+      "file": "data/parque_i/parque_i.case"
+    },
+    {
+      "id": "log_ai60_cfx16_candidate",
+      "label": "Logarithmic AI60 — CFX-16 candidate",
+      "status": "ambiguous_candidate",
+      "file": "data/log_ai60_cfx16/log_ai60_cfx16.case"
+    },
+    {
+      "id": "log_ai60_cfx28_candidate",
+      "label": "Logarithmic AI60 — CFX-28 candidate",
+      "status": "ambiguous_candidate",
+      "file": "data/log_ai60_cfx28/log_ai60_cfx28.case"
+    }
+  ],
+  "fields": {
+    "velocity_vector_candidates": ["Velocity", "velocity", "VEL", "Velocity Vector"],
+    "water_volume_fraction_candidates": ["Water.Volume Fraction", "Water Volume Fraction", "Volume Fraction", "water_volume_fraction"],
+    "pressure_candidates": ["Pressure", "Static Pressure", "pressure"],
+    "vorticity_candidates": ["Velocity Curl", "Vorticity", "vorticity"]
+  },
+  "view": {
+    "slice_normal": [0.0, 1.0, 0.0],
+    "slice_origin": null,
+    "camera_position": null,
+    "background": "white",
+    "image_size": [2400, 1600],
+    "vof_iso_value": 0.5,
+    "show_mesh_edges": true,
+    "streamline_seed": {
+      "center": null,
+      "radius_fraction_of_domain_diagonal": 0.06,
+      "n_points": 250,
+      "max_time": 10.0
+    }
+  },
+  "publication": {
+    "dpi": 600,
+    "font_size": 22,
+    "scalar_bar_width": 0.10,
+    "scalar_bar_height": 0.55,
+    "transparent_background": false
+  }
+}
