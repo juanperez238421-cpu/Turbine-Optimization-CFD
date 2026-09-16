@@ -1,0 +1,28 @@
+{
+  "schema": "ASTRA_M0_SESSION_STATUS_v1",
+  "date": "2026-09-15",
+  "status": "BLOCKED_EXTERNAL_CANONICAL_EXECUTION_REQUIRED",
+  "canonical_drive_file_id": "1AqnbXPiEFmCsUeO3WlwkuxolkxI7af6U",
+  "canonical_basename": "vid_2025-08-29_19-28-15.mp4",
+  "canonical_size_bytes": 714939306,
+  "chatgpt_drive_download_attempt": {
+    "download_raw_file": true,
+    "include_base64": false,
+    "result": "HTTP_413_PROVIDER_TRANSFER_LIMIT",
+    "connector_limit_bytes": 268435456,
+    "conclusion": "Streaming/file-reference mode does not bypass the current connector transfer limit."
+  },
+  "new_execution_route": {
+    "core": "piv_tournament/src/astra_piv/m0.py",
+    "local_cli": "piv_tournament/scripts/run_m0_canonical.py",
+    "colab_runner": "piv_tournament/scripts/astra_colab_m0.py",
+    "notebook": "piv_tournament/notebooks/ASTRA_M0_CANONICAL_AUDIT.ipynb",
+    "provider_binding": "Drive file ID + exact name + exact size + provider MD5 matched to mounted bytes; complete-file SHA-256 then computed locally",
+    "m1_allowed": false
+  },
+  "canonical_sha256": null,
+  "canonical_ffprobe": null,
+  "canonical_full_decode": null,
+  "frames_4250_4500_decode": null,
+  "scientific_rule": "No M1 stationarity, publication selection, CFD, or final validation until canonical M0 returns PASS."
+}
