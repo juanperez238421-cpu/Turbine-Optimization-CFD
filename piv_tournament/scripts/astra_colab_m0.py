@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""One-command Google Colab / mounted-Drive execution of canonical M0 only."""
+"""One-command Google Colab execution of canonical M0 only.
+
+The exact Drive object is downloaded by file ID through the authenticated Drive
+API. This avoids whole-Drive filesystem scans and binds the local bytes to the
+provider ID/name/size/MD5 before the existing M0 audit computes SHA-256.
+"""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -20,6 +25,20 @@ def md5_file(path: Path, chunk: int = 8 * 1024 * 1024) -> str:
         for block in iter(lambda: stream.read(chunk), b""):
             h.update(block)
     return h.hexdigest()
+
+
+def download_exact_drive_object(service, file_id: str, destination: Path) -> None:
+    from googleapiclient.http import MediaIoBaseDownload  # type: ignore
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    request = service.files().get_media(fileId=file_id, supportsAllDrives=True)
+    with destination.open("wb") as fh:
+        downloader = MediaIoBaseDownload(fh, request, chunksize=32 * 1024 * 1024)
+        done = False
+        while not done:
+            status, done = downloader.next_chunk(num_retries=5)
+            if status is not None:
+                print(f"Canonical download: {100.0 * status.progress():.1f}%")
 
 
 def main() -> int:
@@ -45,43 +64,39 @@ def main() -> int:
     if not meta.get("md5Checksum"):
         raise RuntimeError("Google Drive did not expose md5Checksum; fail closed rather than bind by name/size only.")
 
-    roots = [p for p in [Path("/content/drive/MyDrive"), Path("/content/drive/Shareddrives")] if p.exists()]
-    candidates: list[Path] = []
-    for root in roots:
-        for path in root.rglob(CANONICAL_BASENAME):
-            try:
-                if path.is_file() and path.stat().st_size == CANONICAL_SIZE:
-                    candidates.append(path)
-            except OSError:
-                continue
-    if not candidates:
-        raise FileNotFoundError("Canonical Drive object is not visible in the mounted Drive filesystem.")
-
-    expected_md5 = str(meta["md5Checksum"]).lower()
-    exact = [path for path in candidates if md5_file(path).lower() == expected_md5]
-    if len(exact) != 1:
-        raise RuntimeError(
-            "Canonical path resolution is ambiguous or mismatched. "
-            f"size-matched candidates={len(candidates)}, md5-matched candidates={len(exact)}"
-        )
-    video = exact[0]
-
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     out = Path("/content/drive/MyDrive/ASTRA_M0_EVIDENCE") / stamp
     out.mkdir(parents=True, exist_ok=False)
     metadata_path = out / "drive_provider_metadata.json"
     metadata_path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
+    cache = Path("/content/astra_m0_cache") / CANONICAL_BASENAME
+    expected_md5 = str(meta["md5Checksum"]).lower()
+    cache_ok = False
+    if cache.exists() and cache.is_file() and cache.stat().st_size == CANONICAL_SIZE:
+        cache_ok = md5_file(cache).lower() == expected_md5
+    if not cache_ok:
+        if cache.exists():
+            cache.unlink()
+        print("Downloading exact canonical Drive object by file ID; no Drive-tree scan is used.")
+        download_exact_drive_object(service, CANONICAL_ID, cache)
+
+    if cache.stat().st_size != CANONICAL_SIZE:
+        raise RuntimeError(f"Downloaded size mismatch: {cache.stat().st_size} != {CANONICAL_SIZE}")
+    local_md5 = md5_file(cache).lower()
+    if local_md5 != expected_md5:
+        raise RuntimeError(f"Downloaded MD5 mismatch: {local_md5} != provider {expected_md5}")
+
     repo_root = Path.cwd()
     runner = repo_root / "piv_tournament" / "scripts" / "run_m0_canonical.py"
     cmd = [
         sys.executable, str(runner),
-        "--video", str(video),
+        "--video", str(cache),
         "--provider-metadata", str(metadata_path),
         "--out", str(out),
         "--repo-root", str(repo_root),
     ]
-    print("Resolved canonical path:", video)
+    print("Exact Drive object cached at:", cache)
     print("Persisting M0 evidence to:", out)
     proc = subprocess.run(cmd, check=False)
     print("M0 runner exit code:", proc.returncode)

@@ -1,5 +1,5 @@
 {
-  "schema": "ASTRA_M0_SESSION_STATUS_v1",
+  "schema": "ASTRA_M0_SESSION_STATUS_v2",
   "date": "2026-09-15",
   "status": "BLOCKED_EXTERNAL_CANONICAL_EXECUTION_REQUIRED",
   "canonical_drive_file_id": "1AqnbXPiEFmCsUeO3WlwkuxolkxI7af6U",
@@ -17,8 +17,18 @@
     "local_cli": "piv_tournament/scripts/run_m0_canonical.py",
     "colab_runner": "piv_tournament/scripts/astra_colab_m0.py",
     "notebook": "piv_tournament/notebooks/ASTRA_M0_CANONICAL_AUDIT.ipynb",
-    "provider_binding": "Drive file ID + exact name + exact size + provider MD5 matched to mounted bytes; complete-file SHA-256 then computed locally",
+    "provider_binding": "exact Drive file ID -> provider name/size/MD5 -> exact Drive API media download -> local size/MD5 match -> complete-file SHA-256 -> ffprobe -> strict EOF decode",
+    "whole_drive_name_scan_removed": true,
     "m1_allowed": false
+  },
+  "parallel_retrospective_ascii_route": {
+    "folder_id": "1UF77fkaEm2NZ2CJCbfADYeAHaoj3PnZO",
+    "colab_runner": "piv_tournament/scripts/astra_colab_ascii_freeze.py",
+    "core_listing_validator": "piv_tournament/src/astra_piv/drive_freeze.py",
+    "forensic_freezer": "piv_tournament/scripts/freeze_pivlab_ascii.py",
+    "current_chatgpt_raw_byte_sample_count": 13,
+    "current_chatgpt_raw_byte_sample_indices": [1, 2, 25, 50, 75, 100, 125, 150, 175, 200, 225, 249, 250],
+    "full_250_sha_freeze_completed": false
   },
   "canonical_sha256": null,
   "canonical_ffprobe": null,

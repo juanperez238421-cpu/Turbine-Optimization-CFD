@@ -1,35 +1,69 @@
-# New results obtained on 2026-09-15
+# New results obtained on 2026-09-15 — execution update
 
-Only results newly obtained or materially strengthened in this session are listed here.
+Only results newly obtained or materially strengthened in the current execution pass are listed here.
 
-## 1. M0 has a concrete one-command route around the ChatGPT transfer ceiling
+## 1. Thirteen complete raw PIVlab exports were downloaded and cryptographically frozen
 
-A second raw-download attempt used Drive streaming/file-reference mode (`download_raw_file=true`, `include_base64=false`). The provider still rejected the 714,939,306-byte canonical MP4 because the connector ceiling is 268,435,456 bytes. Therefore the limitation is confirmed to be connector-side rather than a base64-only issue.
+Complete raw bytes were retrieved from Drive for the stratified indices:
 
-A dedicated M0-only implementation was prepared that binds mounted bytes to the exact Drive object using file ID, exact basename, exact byte size and provider MD5 before computing the complete-file SHA-256. It then persists `ffprobe`, performs strict decode-to-EOF, explicitly tests the historical 4250–4500 range, and records Git/script hashes. It cannot silently open M1.
+`0001, 0002, 0025, 0050, 0075, 0100, 0125, 0150, 0175, 0200, 0225, 0249, 0250`.
 
-## 2. Camera-resolution contradiction was materially reduced
+Every file was parsed locally and assigned a complete-file SHA-256. This is stronger than the earlier header-only continuity check.
 
-The official Chronos 1.4 Rev5 datasheet states a 1280 × 1024 image sensor at 1069 FPS for full-frame operation. Separately, `GVT_Vortex_Analysis_Main.m` explicitly creates a **post-processing bilinear interpolation target** `imgW=1630`, `imgH=1345` and calls `imresize(...,[1345 1630],'bilinear')`.
+Across all 13 raw files:
 
-Therefore **1630 × 1345 is demonstrably an analysis/resampling dimension in at least one project workflow and must not be called camera native resolution on that evidence**. The thesis statement calling 1630 × 1345 “native” conflicts with the manufacturer specification and the project script. The actual encoded resolution of the canonical MP4 remains open until M0 `ffprobe` executes.
+- pair provenance exactly matches `A = 4249 + index`, `B = 4250 + index`;
+- calibration metadata are invariant: `xy = 0.00019061 m/px`, `uv = 0.20386 (m/s)/(px/frame)`;
+- each file contains exactly **3,850 rows**;
+- the grid is exactly **70 × 55** in every file;
+- the coordinate-grid hash is identical in all 13 files: `c04e34792866ca52c9c333a5e2412d746a75e8dd327b20dad6ac2f60f2fd1c99`;
+- every file has **2,658 type-0/masked locations** and **1,192 finite active vectors**;
+- the type-0 mask itself is identical across all 13 files and is the exact complement of the finite-vector mask;
+- type-1/direct fraction among the active 1,192 vectors varies from **49.92% to 62.08%**.
 
-## 3. Final-grid inconsistency was quantified exactly
+This directly corroborates the 1,192-cell active domain used by the retrospective tournament from raw PIVlab files distributed throughout the historical window. It also provides real evidence that direct-versus-interpolated composition changes over time, which makes the planned direct-only versus all-vector sensitivity test scientifically relevant.
 
-The exported PIVlab coordinate spacing is `0.0034310519 m` in both axes. Dividing by the raw PIVlab calibration `0.00019061 m/px` yields `18.00037721 px` per exported grid step. A final 18 px window at 50% overlap should nominally produce a 9 px step (`0.00171549 m`), not ~18 px.
+This is still a **13/250 raw-byte sample**, not the final full cryptographic freeze.
 
-This turns the prior qualitative concern into a measured contradiction. It does **not** resolve the historical interrogation settings.
+## 2. The exported-grid pitch was re-estimated from complete raw coordinate lattices
 
-## 4. First-pass interrogation setting is now more clearly unresolved
+Using all unique coordinates in each complete raw export, the median lattice spacing is:
 
-Three project evidence paths conflict:
+`0.00343104452 m`
 
-- reconstruction/figure script: 32 px first pass;
-- thesis-oriented method text: 36 px first pass;
-- `GVT_Vortex_Analysis_Main.m` comment: 64 px first pass.
+which corresponds to:
 
-No authoritative PIVlab session/`Sett.mat` was found in the targeted Drive search. Verdict: **INSUFFICIENT_EVIDENCE**, not 32 or 36.
+`18.00033849 px`
 
-## 5. Strategic raw-header continuity checks extended
+under the stored `0.00019061 m/px` calibration.
 
-In addition to the known endpoint files, raw Drive exports 0002, 0125 and 0249 were reopened. Their headers report 4251/4252, 4374/4375 and 4498/4499 respectively, with the same `xy=0.00019061 m/px` and `uv=0.20386 (m/s)/(px/frame)`. Beginning/middle/end sampled provenance is therefore internally consistent. Full 250-file byte/hash verification remains pending external mounted-Drive execution.
+This is a more robust estimate than a single adjacent-coordinate difference. The conclusion is unchanged: the exported grid is nominally an **18 px** lattice, whereas a simple 18 px final window at 50% overlap would nominally imply a **9 px** step.
+
+Historical interrogation settings therefore remain **INSUFFICIENT_EVIDENCE**.
+
+## 3. The connector can enumerate the complete historical export namespace
+
+The actual Drive parent folder exposes `PIVlab_0001.txt` through `PIVlab_0250.txt`, and the tested objects are individually raw-downloadable. Therefore the remaining 250-file freeze is no longer a data-access design problem; it is an execution step.
+
+A new Colab downloader now lists the folder by exact parent ID, requires the complete 0001–0250 namespace, downloads every exact Drive file ID, matches provider byte size and MD5, then delegates to the existing `freeze_pivlab_ascii.py` for SHA-256, grid, vector and source-pair checks.
+
+## 4. The canonical M0 Colab route no longer scans the mounted Drive tree
+
+The prior runner recursively searched `MyDrive`/`Shareddrives` for same-name/size candidates before comparing MD5. That can be slow and unnecessarily ambiguous on a large Drive.
+
+The updated runner instead:
+
+`exact Drive file ID -> provider metadata -> exact Drive API media download -> provider size/MD5 match -> complete SHA-256 -> ffprobe -> strict EOF decode -> historical 4250–4500 range audit`.
+
+This preserves the existing fail-closed M0 core while removing whole-Drive pathname discovery from the critical identity chain.
+
+## 5. Software QA added for the 250-file Drive namespace gate
+
+A new pure-core validator requires exactly one `PIVlab_0001.txt` through `PIVlab_0250.txt`, positive provider sizes, Drive file IDs, and valid provider MD5 checksums. Four new unit tests cover:
+
+- exact 250-object namespace;
+- missing + duplicate indices;
+- absent provider MD5;
+- unrelated folder files without masking expected gaps.
+
+The new module/scripts compile locally and the four new unit tests pass. GitHub Actions must still pass after the integrated commit before this software change is considered remotely frozen.
