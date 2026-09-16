@@ -1,0 +1,39 @@
+study:
+  name: ASTRA PIV Selector SuperStudy
+  strict_no_cfd_leakage: true
+  canonical_video_basename: vid_2025-08-29_19-28-15.mp4
+  sample_sizes: [25, 50, 75, 100, 150, 200, 250]
+  stochastic_seeds: [20260912, 20260913, 20260914, 20260915, 20260916, 20260917, 20260918, 20260919, 20260920, 20260921]
+  spatial_cv_folds: 5
+  temporal_block_jackknife_folds: 5
+selector_families:
+  baseline: [legacy_control, uniform, stratified_random, random_iid, best_contiguous_window]
+  quality: [quality_top, temporal_quality_stratified]
+  representative: [cluster_medoids, farthest_point, kennard_stone, kernel_herding, d_optimal, facility_location]
+  spatial: [spatial_coverage_log, spatial_saturated_coverage, spatial_lower_tail]
+  hybrid: [pareto_temporal, qcrc_maximin, mmr_maximin, quality_facility_maximin]
+sensitivity:
+  coarse_interrogation_window_px: [32, 36, 48]
+  pce_quantile_normalization: [[5,95], [10,90], [20,80]]
+  reliability_modes: [geomean, pce_only, ppr_only]
+  quality_gate_mad: [3.0, 4.0, 5.0]
+  spatial_target_fraction_of_n: [0.15, 0.25, 0.40]
+  spatial_lower_tail_fraction: [0.05, 0.10, 0.20]
+decision:
+  pareto_first: true
+  minimax_regret: true
+  monte_carlo_weight_draws: 20000
+  min_scenario_completeness: 0.90
+  min_pareto_frequency: 0.60
+  min_rule_consensus_fraction: 0.80
+  allow_no_winner: true
+publication_freeze:
+  require_canonical_video: true
+  require_stationarity_consensus: true
+  require_explicit_roi: true
+  require_piv_native_quality: true
+  require_spatial_holdout_validation: true
+  require_temporal_jackknife: true
+  require_sample_size_convergence: true
+  require_ablation_stability: true
+  cfd_remains_locked_until_freeze: true
