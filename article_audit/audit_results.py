@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import ast
 import csv
+import hashlib
 import json
 import math
 import re
@@ -92,6 +93,15 @@ def metadata_coverage(row: Dict[str, str], fields: Iterable[str]) -> float:
         return 100.0
     present = sum(bool((row.get(f) or "").strip()) for f in fields)
     return round(100.0 * present / len(fields), 1)
+
+
+def record_sha256(row: Dict[str, str], policy_version: str) -> str:
+    canonical = {
+        "policy_version": policy_version,
+        "record": {key: (row.get(key) or "").strip() for key in sorted(row)},
+    }
+    payload = json.dumps(canonical, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def audit_registry(rows: List[Dict[str, str]], policy: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
@@ -177,8 +187,13 @@ def audit_registry(rows: List[Dict[str, str]], policy: Dict[str, Any]) -> Tuple[
 
         hard = set(policy["hard_blocker_flags"])
         warnings = set(policy["warning_flags"])
+        known_flags = hard | warnings
         hard_hits = sorted(set(declared) & hard)
         warning_hits = sorted(set(declared) & warnings)
+        unknown_flags = sorted(set(declared) - known_flags)
+
+        for flag in unknown_flags:
+            issue("UNKNOWN_DECLARED_FLAG", "WARNING", f"Flag is not defined by policy: {flag}")
 
         for flag in hard_hits:
             issue(flag, "BLOCKER", "Declared scientific/provenance hard blocker")
@@ -196,16 +211,25 @@ def audit_registry(rows: List[Dict[str, str]], policy: Dict[str, Any]) -> Tuple[
         has_blocker = any(x["severity"] == "BLOCKER" for x in issues)
         has_warning = any(x["severity"] == "WARNING" for x in issues)
 
+        traceable = bool((row.get("source_citation_key") or "").strip()) and bool((row.get("source_locator") or "").strip())
+        release_ready = (
+            traceable
+            and row.get("uncertainty_status") in {"REPORTED", "PROPAGATED", "NOT_APPLICABLE"}
+            and row.get("validation_scope") != "UNTESTED"
+        )
+
         if has_error or has_blocker:
             state = "BLOCKED"
         elif has_warning:
             state = "CONDITIONAL"
+        elif release_ready:
+            state = "RELEASE_CANDIDATE"
         elif row.get("result_origin") == "calculated" and reproduced_value is not None:
             state = "REPRODUCIBLE"
-        elif (row.get("source_citation_key") or "").strip() and ((row.get("source_locator") or "").strip()):
+        elif traceable:
             state = "TRACEABLE"
         else:
-            state = "RELEASE_CANDIDATE"
+            state = "CONDITIONAL"
 
         coverage = metadata_coverage(row, policy["critical_metadata_fields"])
         if has_error:
@@ -228,6 +252,7 @@ def audit_registry(rows: List[Dict[str, str]], policy: Dict[str, Any]) -> Tuple[
                 "validation_scope": row.get("validation_scope", ""),
                 "claim_scope": row.get("claim_scope", ""),
                 "publication_role": row.get("publication_role", ""),
+                "record_sha256": record_sha256(row, str(policy.get("policy_version", ""))),
                 "issues": issues,
             }
         )
@@ -236,8 +261,12 @@ def audit_registry(rows: List[Dict[str, str]], policy: Dict[str, Any]) -> Tuple[
     issue_counts = Counter(
         issue["code"] for result in results for issue in result["issues"]
     )
+    registry_sha = hashlib.sha256(
+        "\n".join(sorted(x["record_sha256"] for x in results)).encode("utf-8")
+    ).hexdigest()
     summary = {
         "policy_version": policy.get("policy_version"),
+        "registry_sha256": registry_sha,
         "records": len(results),
         "state_counts": dict(sorted(state_counts.items())),
         "issue_counts": dict(sorted(issue_counts.items())),
@@ -258,7 +287,7 @@ def write_outputs(results: List[Dict[str, Any]], summary: Dict[str, Any], out_di
     fields = [
         "result_id","claim_group","result_label","declared_value","unit","evidence_mode","doi",
         "audit_state","metadata_coverage_pct","reproduced_value","comparison_class",
-        "uncertainty_status","validation_scope","claim_scope","publication_role","issue_codes",
+        "uncertainty_status","validation_scope","claim_scope","publication_role","record_sha256","issue_codes",
     ]
     with (out_dir / "audit_results.csv").open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
@@ -272,6 +301,7 @@ def write_outputs(results: List[Dict[str, Any]], summary: Dict[str, Any], out_di
         "# Santiago result metadata audit",
         "",
         f"- Policy version: **{summary['policy_version']}**",
+        f"- Registry SHA-256: `{summary['registry_sha256']}`",
         f"- Records: **{summary['records']}**",
         f"- Structural-error records: **{summary['structural_error_records']}**",
         f"- Blocked records: **{summary['hard_blocked_records']}**",
