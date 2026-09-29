@@ -1,0 +1,36 @@
+name: Results metadata audit
+
+on:
+  push:
+    branches:
+      - main
+      - santiago-results-metadata-audit-v1
+    paths:
+      - "article_audit/**"
+      - ".github/workflows/results-metadata-audit.yml"
+  pull_request:
+    paths:
+      - "article_audit/**"
+      - ".github/workflows/results-metadata-audit.yml"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Unit tests
+        run: python -m unittest discover -s article_audit/tests -v
+      - name: Run deterministic metadata audit
+        run: |
+          python article_audit/audit_results.py \
+            --input article_audit/data/santiago_results_registry.csv \
+            --policy article_audit/config/classification_policy.json \
+            --out-dir article_audit/build \
+            --fail-on-structural-errors
+      - name: Show summary
+        run: cat article_audit/build/AUDIT_SUMMARY.md
