@@ -1,0 +1,94 @@
+{
+  "policy_version": "1.1.0",
+  "evidence_modes": [
+    "M",
+    "S",
+    "C",
+    "I"
+  ],
+  "source_kinds": [
+    "RAW_DATA",
+    "PRIMARY_PAPER",
+    "PROJECT_CALCULATION",
+    "MANUSCRIPT_TEXT",
+    "SECONDARY_SOURCE"
+  ],
+  "result_origins": [
+    "source_reported",
+    "measured_raw",
+    "simulated",
+    "calculated",
+    "inferred"
+  ],
+  "comparison_classes": [
+    "SINGLE_CASE",
+    "WITHIN_STUDY_SAME_STATE",
+    "WITHIN_STUDY_DIFFERENT_OPTIMUM_STATE",
+    "WITHIN_STUDY_PEAK_UNMATCHED_SPEED",
+    "CROSS_STUDY_HARMONIZED",
+    "CROSS_STUDY_NONCOMPARABLE"
+  ],
+  "uncertainty_statuses": [
+    "REPORTED",
+    "PROPAGATED",
+    "NOT_REPORTED",
+    "NOT_PROPAGATED",
+    "NOT_APPLICABLE",
+    "PENDING"
+  ],
+  "validation_scopes": [
+    "NONE",
+    "SOURCE_EXPERIMENT",
+    "LOCAL_SCALAR",
+    "LOCAL_SPATIAL",
+    "GLOBAL_SCALAR",
+    "DERIVED_FROM_SOURCE",
+    "UNTESTED"
+  ],
+  "claim_scopes": [
+    "CONFIGURATION_SPECIFIC",
+    "WITHIN_STUDY_ONLY",
+    "LOCAL_VALIDATION_ONLY",
+    "QUALITATIVE_ONLY",
+    "CROSS_STUDY_HARMONIZED"
+  ],
+  "hard_blocker_flags": [
+    "SOURCE_IDENTITY_MISMATCH",
+    "UNIT_MISMATCH",
+    "DENOMINATOR_INCONSISTENCY",
+    "UNTESTED_OPTIMUM_AS_VALIDATED",
+    "CROSS_STUDY_POOLING_UNJUSTIFIED",
+    "CALCULATION_MISMATCH"
+  ],
+  "warning_flags": [
+    "NO_UNCERTAINTY",
+    "UNCERTAINTY_NOT_PROPAGATED",
+    "DIFFERENT_OPTIMUM_STATE",
+    "PEAKS_AT_POSSIBLY_DIFFERENT_SPEEDS",
+    "LOCAL_VALIDATION_ONLY",
+    "UNTESTED_EXPERIMENTALLY",
+    "INTERFERENCE_LIMITED",
+    "SOURCE_LOCATOR_PENDING",
+    "FORMAT_QA"
+  ],
+  "critical_metadata_fields": [
+    "result_id",
+    "result_label",
+    "result_value",
+    "unit",
+    "evidence_mode",
+    "source_kind",
+    "source_citation_key",
+    "result_origin",
+    "geometry_state",
+    "operating_state",
+    "comparison_class",
+    "uncertainty_status",
+    "validation_scope",
+    "claim_scope",
+    "manuscript_location"
+  ],
+  "calculation_tolerance_abs": 0.015,
+  "require_locator_for_release": true,
+  "require_primary_identity_for_release": true
+}

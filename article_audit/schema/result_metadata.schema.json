@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Santiago GVT auditable result metadata",
+  "type": "object",
+  "required": [
+    "result_id",
+    "claim_group",
+    "result_label",
+    "result_value",
+    "unit",
+    "evidence_mode",
+    "source_kind",
+    "source_citation_key",
+    "result_origin",
+    "geometry_state",
+    "operating_state",
+    "comparison_class",
+    "uncertainty_status",
+    "validation_scope",
+    "claim_scope",
+    "declared_flags",
+    "manuscript_location"
+  ],
+  "properties": {
+    "result_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "claim_group": {
+      "type": "string"
+    },
+    "result_label": {
+      "type": "string"
+    },
+    "result_value": {
+      "type": "number"
+    },
+    "unit": {
+      "type": "string"
+    },
+    "evidence_mode": {
+      "enum": [
+        "M",
+        "S",
+        "C",
+        "I"
+      ]
+    },
+    "source_kind": {
+      "enum": [
+        "RAW_DATA",
+        "PRIMARY_PAPER",
+        "PROJECT_CALCULATION",
+        "MANUSCRIPT_TEXT",
+        "SECONDARY_SOURCE"
+      ]
+    },
+    "source_citation_key": {
+      "type": "string"
+    },
+    "doi": {
+      "type": "string"
+    },
+    "source_file": {
+      "type": "string"
+    },
+    "source_locator": {
+      "type": "string",
+      "description": "Page/table/figure/row or raw-data locator. Never replace this with manuscript-only location when a primary source is available."
+    },
+    "result_origin": {
+      "enum": [
+        "source_reported",
+        "measured_raw",
+        "simulated",
+        "calculated",
+        "inferred"
+      ]
+    },
+    "calculation_expression": {
+      "type": "string"
+    },
+    "input_result_ids": {
+      "type": "string",
+      "description": "Semicolon-separated dependency IDs."
+    },
+    "geometry_state": {
+      "type": "string"
+    },
+    "operating_state": {
+      "type": "string"
+    },
+    "comparison_class": {
+      "type": "string"
+    },
+    "uncertainty_status": {
+      "type": "string"
+    },
+    "validation_scope": {
+      "type": "string"
+    },
+    "claim_scope": {
+      "type": "string"
+    },
+    "declared_flags": {
+      "type": "string",
+      "description": "Semicolon-separated controlled flags."
+    },
+    "manuscript_location": {
+      "type": "string"
+    },
+    "publication_role": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
