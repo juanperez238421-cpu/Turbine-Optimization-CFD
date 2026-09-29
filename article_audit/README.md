@@ -34,7 +34,7 @@ The audit engine assigns one of these states:
 - **TRACEABLE** — source identity and locator are sufficient, but the result is not independently recalculated.
 - **RELEASE_CANDIDATE** — traceability is complete, no declared blocker/warning is active, and the metadata required by policy are present.
 
-A high metadata-completeness percentage can never override a blocker.
+A high metadata-completeness percentage can never override a blocker. Every audited row also receives a deterministic SHA-256 fingerprint, and the run produces a registry-level SHA-256 so a manuscript result freeze can be tied to an exact metadata state.
 
 ## Classification dimensions
 
